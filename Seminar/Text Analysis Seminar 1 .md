@@ -7,6 +7,17 @@ title: 25 Text Analysis Seminar 1
 
 讲座人：Hanxu hanxu.dong.21@ucl.ac.uk
 
+<a href="https://github.com/leondong98/Text-Analysis-Workshop/raw/main/data/mft_dictionary.csv" download>
+  <button style="background-color:#4CAF50; color:white; padding:10px 20px; margin-right:10px; border:none; border-radius:4px;">
+    Seminar data 1
+  </button>
+</a>
+<a href="https://github.com/leondong98/Text-Analysis-Workshop/raw/main/data/mft_texts.csv" download>
+  <button style="background-color:#F57C00; color:white; padding:10px 20px; border:none; border-radius:4px;">
+    Seminar data 2
+  </button>
+</a>
+
 
 ## 1.1 研讨会介绍
 本次研讨课旨在引导学生实际操作 [quanteda](https://quanteda.io) 套件及若干相关 R 语言程序包。课程重点包括：探索该套件的基本功能，将文本导入并转换为语料库（corpus）对象格式，学习如何将文本转化为文档-特征矩阵（document-feature matrices, DFM），在此基础上开展描述性分析，并尝试构建与验证字典工具（dictionaries）以支持文本分析研究。
