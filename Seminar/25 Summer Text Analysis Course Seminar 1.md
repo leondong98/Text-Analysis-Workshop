@@ -664,7 +664,7 @@ hist(mft_n_words)
 <details>
 <summary>Click to show figure</summary>
 
-<img src="https://raw.githubusercontent.com/leondong98/Text-Analysis-Workshop/main/images/1-1.png" width="600"/> 
+<img src="https://raw.githubusercontent.com/leondong98/Text-Analysis-Workshop/main/images/1-1.png" width="700"/> 
 
 
 </details>
@@ -1079,7 +1079,7 @@ dictionary_means_by_subreddit %>%
 <details>
 <summary>Click to show figure</summary>
 
-<img src="https://raw.githubusercontent.com/leondong98/REPO_NAME/main/images/1-2.png" width="600"/>
+<img src="https://raw.githubusercontent.com/leondong98/Text-Analysis-Workshop/main/images/1-2.png" width="700"/>
 
 </details>
 
@@ -1157,7 +1157,7 @@ dictionary_means_by_subreddit %>%
 <details>
 <summary>Click to show figure</summary>
 
-<img src="https://raw.githubusercontent.com/leondong98/REPO_NAME/main/images/1-3.png" width="600"/>
+<img src="https://raw.githubusercontent.com/leondong98/Text-Analysis-Workshop/main/images/1-3.png" width="700"/>
 
 </details>
 
