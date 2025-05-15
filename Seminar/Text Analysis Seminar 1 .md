@@ -1,5 +1,5 @@
 ---
-title: 25 Text Analysis Seminar 1
+title: Text Analysis Seminar 1
 
 ---
 
