@@ -1,5 +1,5 @@
 ---
-title: 25 Summer Text Analysis Course Seminar 1
+title: 25 Text Analysis Seminar 1
 
 ---
 
@@ -664,7 +664,7 @@ hist(mft_n_words)
 <details>
 <summary>Click to show figure</summary>
 
-<img src="https://hackmd.io/_uploads/HkG4q7W-xl.png" alt="My Figure" width="600"/>
+<img src="https://raw.githubusercontent.com/leondong98/REPO_NAME/main/images/1-1.png" width="600"/>
 
 </details>
 
@@ -1078,7 +1078,7 @@ dictionary_means_by_subreddit %>%
 <details>
 <summary>Click to show figure</summary>
 
-<img src="https://hackmd.io/_uploads/ByB2DEb-ll.png" alt="My Figure" width="700"/>
+<img src="https://raw.githubusercontent.com/leondong98/REPO_NAME/main/images/1-2.png" width="600"/>
 
 </details>
 
@@ -1156,7 +1156,7 @@ dictionary_means_by_subreddit %>%
 <details>
 <summary>Click to show figure</summary>
 
-<img src="https://hackmd.io/_uploads/HJO4Y4Zbeg.png" alt="My Figure" width="700"/>
+<img src="https://raw.githubusercontent.com/leondong98/REPO_NAME/main/images/1-3.png" width="600"/>
 
 </details>
 
