@@ -1,5 +1,5 @@
 ---
-title: Text Analysis Seminar 1
+title: Seminar1
 
 ---
 
