@@ -7,17 +7,17 @@ title: 25 Text Analysis Seminar 1
 
 讲座人：Hanxu hanxu.dong.21@ucl.ac.uk
 
-<a href="https://github.com/leondong98/Text-Analysis-Workshop/raw/main/Data/mft_dictionary.csv" download>
-  <button style="background-color:#4CAF50; color:white; padding:10px 20px; margin-right:10px; border:none; border-radius:5px;">
+<p>
+  <a href="https://github.com/leondong98/Text-Analysis-Workshop/raw/main/Data/mft_dictionary.csv" 
+     style="display:inline-block; background-color:#4CAF50; color:white; padding:10px 20px; text-decoration:none; margin-right:10px; border-radius:5px;">
     Seminar data 1
-  </button>
-</a>
+  </a>
 
-<a href="https://github.com/leondong98/Text-Analysis-Workshop/raw/main/Data/mft_texts.csv" download>
-  <button style="background-color:#F57C00; color:white; padding:10px 20px; border:none; border-radius:5px;">
+  <a href="https://github.com/leondong98/Text-Analysis-Workshop/raw/main/Data/mft_texts.csv" 
+     style="display:inline-block; background-color:#F57C00; color:white; padding:10px 20px; text-decoration:none; border-radius:5px;">
     Seminar data 2
-  </button>
-</a>
+  </a>
+</p>
 
 
 
