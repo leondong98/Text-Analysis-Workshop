@@ -13,16 +13,16 @@ title: 简单R入门
 **首先，请下载 [R](https://cran.r-project.org/mirrors.html) 和 [RStudio](https://posit.co/download/rstudio-desktop/)**
 
 **这个介绍将涵盖以下主题：**
-	•	在控制台中使用 R
-	•	在脚本文件中使用 R
-	•	对象与赋值
-	•	向量（vectors）
-	•	函数的使用
-	•	帮助文档的查询
-	•	数据框（data frames）
-	•	子集提取（subsetting）
-	•	线性回归（linear regression）
-    •	t 检验（t-test）
+- 在控制台中使用 R
+- 在脚本文件中使用 R
+- 对象与赋值
+- 向量（vectors）
+- 函数的使用
+- 帮助文档的查询
+- 数据框（data frames）
+- 子集提取（subsetting）
+- 线性回归（linear regression）
+- t 检验（t-test）
 
 ## RStudio
 
