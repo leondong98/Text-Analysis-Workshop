@@ -1,6 +1,5 @@
 ---
 title: Tidyverse 包介绍
-tags: [Tidyverse包介绍]
 
 ---
 
@@ -12,8 +11,8 @@ tags: [Tidyverse包介绍]
 在本课程模块中，我们将使用多个来自 “Tidyverse” 的程序包 —— 这是一个为简化 R 中数据管理、处理与可视化而开发的数据科学套件集合。我们将从安装 Tidyverse 并加载它开始：
 
 ```r
-install.packages("tidyverse") ## 只需安装一次！如果你已经安装了 Tidyverse 软件包，则无需再次运行此行。
-library(tidyverse) ## 每当你想使用本页描述的功能时，都需要运行这一行代码
+install.packages("tidyverse") # 只需安装一次！如果你已经安装了 Tidyverse 软件包，则无需再次运行此行。
+library(tidyverse) # 每当你想使用本页描述的功能时，都需要运行这一行代码
 ```
 
 ```
