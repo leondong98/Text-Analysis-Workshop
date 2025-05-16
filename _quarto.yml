@@ -1,0 +1,31 @@
+project:
+  type: website
+  output-dir: docs
+
+website:
+  title: "Text Analysis Workshop"
+  navbar:
+    left:
+      - text: "Home"
+        href: index.qmd
+      - text: "Seminars"
+        menu:
+          - text: "Seminar 1"
+            href: Seminar/Seminar1.qmd
+          - text: "Seminar 2"
+            href: Seminar/Seminar2.qmd
+          - text: "Seminar 3"
+            href: Seminar/Seminar3.qmd
+          - text: "Seminar 4"
+            href: Seminar/Seminar4.qmd
+          - text: "Seminar 5"
+            href: Seminar/Seminar5.qmd
+          - text: "Seminar 6"
+            href: Seminar/Seminar6.qmd
+          - text: "Seminar 7"
+            href: Seminar/Seminar7.qmd
+
+format:
+  html:
+    theme: cosmo
+    toc: true
