@@ -1,5 +1,5 @@
 ---
-title: Seminar4
+title: "Seminar4: 语言模型B：主题模型"
 
 ---
 
