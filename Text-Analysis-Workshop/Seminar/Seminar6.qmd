@@ -1,4 +1,7 @@
-# 研讨会6：文本作为数据C：词序列 
+---
+title: Seminar6: 文本作为数据C：词序列 
+
+---
 
 讲座人：Hanxu hanxu.dong.21@ucl.ac.uk
 
