@@ -3,8 +3,6 @@ title: Tidyverse 包介绍
 
 ---
 
-# Tidyverse 包介绍
-
 讲座人：Hanxu hanxu.dong.21@ucl.ac.uk
 
 
