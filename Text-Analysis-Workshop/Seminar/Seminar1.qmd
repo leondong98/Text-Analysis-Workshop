@@ -1,10 +1,7 @@
 ---
-title: Seminar1
+title: Seminar1：文本作为数据A
 
 ---
-
-# 研讨会1: 文本作为数据A
-
 讲座人：Hanxu hanxu.dong.21@ucl.ac.uk
 
 <p>
