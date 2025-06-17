@@ -1,5 +1,5 @@
 ---
-title: Seminar3: 语言模型A：监督式文本分类学习'
+title: "Seminar3: 语言模型A：监督式文本分类学习"
 
 ---
 
