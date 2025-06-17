@@ -1,5 +1,5 @@
 ---
-title: Seminar5: 文本作为数据B：词嵌入
+title: "Seminar5: 文本作为数据B：词嵌入"
 
 ---
 
