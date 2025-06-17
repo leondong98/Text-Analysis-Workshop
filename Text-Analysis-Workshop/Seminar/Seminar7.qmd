@@ -1,9 +1,7 @@
 ---
-title: '研讨会7: 语言模型C：神经网络、迁移学习与Transformer架构'
+title: Seminar7: 语言模型C：神经网络、迁移学习与Transformer架构
 
 ---
-
-# 研讨会7: 语言模型C：神经网络、迁移学习与Transformer架构
 
 
 本次研讨课将向你介绍 transformer 模型，这些模型通过 HuggingFace 的 transformers 库在 Python 中实现。目前，这是使用 transformer 模型最直接的方法——在 R 中并没有很好的替代方案。其关键原因是：HuggingFace 作为一个模型库及其对应的分词器平台，是专为 Python 集成设计的。HuggingFace 提供了一个模型集散中心及配套的函数库，使得获取预训练模型、对其进行微调，以及将模型分享给其他研究者进一步修改变得相对容易。
