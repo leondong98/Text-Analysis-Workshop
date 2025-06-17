@@ -1,0 +1,449 @@
+# 研讨会6：文本作为数据C：词序列 
+
+讲座人：Hanxu hanxu.dong.21@ucl.ac.uk
+
+
+⚠️ 注意： 今天的研讨课数据集数量较多，我将在Seminar 5 结束后提供下载方式
+
+
+## 6.1 句子与文档嵌入表示
+
+在昨天的研讨课中，我们学习了词的稠密向量表示（词嵌入）如何更好地表达词义，可以用于寻找同义词、建立类比模型，以及通过扩展词典来衡量概念的普及程度。本周，我们将生成完整文本序列（句子、段落、文档）的稠密向量表示。这对于诸如文本分类和聚类等任务非常有用，因为这些任务需要为每个文本提供一个单一的向量表示。
+
+在今天的研讨课中，我们将重点讨论两种方法：词嵌入的聚合以及基于 ``sentence-BERT`` 的嵌入。我们将把这些方法应用于讲座中介绍的 Twitter 语料库的一部分，并利用这些嵌入进行聚类与信息检索。
+
+## 6.2 Packages
+在开始研讨会时，先下载/加载以下 R 包：
+    
+```r
+library(stringr)
+library(dplyr)
+library(data.table)
+library(quanteda)
+library(text2vec)
+#如果你无法加载 stringer 包，请先运行以下代码：
+# install.packages("stringr")
+```
+
+## 6.3 数据
+
+今天的研讨课将依赖于三个数据来源。
+
+- ``GloVe embeddings``：你在上周已经使用过这些嵌入，因此可能已经下载。如果尚未下载，可以通过研讨页面顶部的链接获取（下载可能需要几分钟）。
+- ``Greenpeace tweets``：我们将使用讲座中提到的 Twitter 数据集的一个子集——即 2010 年至 2020 年间，Greenpeace 英国分部（一家环境抗议与倡导组织）的推文。注意：“seminar data 2” 将下载两个对象——一个 R 数据文件和一个 CSV 文件。
+- ``Guardian articles``：最后，我们将检索该时间段内的新闻文章片段，查找是否存在与 Greenpeace 主张相呼应的内容。注意：“seminar data 3” 将下载两个 R 数据文件。
+
+
+## 6.4 第一部分：词嵌入的聚合
+
+我们将从聚合每个词元的词嵌入开始，为每条推文生成稠密的向量表示。
+
+1. 加载推文数据和预训练的 GloVe 嵌入表示：
+
+<details>
+<summary>Reveal Code</summary>
+
+```r
+load("glove_embeddings.Rdata")
+load("greenpeace_tweets.Rdata")
+```  
+
+</details> 
+
+2. 找出该推文语料库中使用的所有不重复词项（unique words）。为此，首先需要对推文进行分词（可以使用 ``quanteda`` 包实现），然后依次使用 ``unlist()`` 和 ``unique()`` 函数来提取词项类型（word-types）
+
+<details>
+<summary>Reveal Code</summary>
+
+```r
+vocab_corpus <- greenpeace_tweets$tweet_text %>%
+  tokens(remove_url = TRUE, remove_punct = TRUE, remove_symbols = TRUE) %>%
+  tokens_tolower() %>%
+  unlist() %>%
+  unique()
+```  
+
+</details> 
+    
+3. 找出推文语料库中不重复词项集合与 GloVe 嵌入词汇表之间的交集。⚠️ 注意，glove 对象的行名（row names）以字符串形式存储词项类型（word-type）。请计算推文语料库中有多少比例的词项属于 “词汇表外”（Out Of Vocabulary, OOV）
+
+<details>
+<summary>Reveal Code</summary>
+
+```r
+# 查找 GloVe 嵌入的词汇表
+vocab_glove <- rownames(glove)
+
+# 找出与语料库词汇的交集
+vocab_intersection <- intersect(vocab_corpus, vocab_glove)
+
+# 语料库中有多少个词是词汇表外（OOV）的？
+length(vocab_corpus) - length(vocab_intersection)
+```  
+
+```
+[1] 19860  
+```
+  
+```r
+# 推特语料库中有多少比例的词项类型是词汇表外（OOV）的？
+1 - (length(vocab_intersection) / length(vocab_corpus))
+```  
+
+```
+[1] 0.5172144
+```
+    
+```r
+# 哪些类型的词属于词汇表外（OOV）？
+vocab_corpus[!(vocab_corpus %in% vocab_intersection)][1:10]
+```  
+
+```
+ [1] "here's"          "@patrickaryee"   "you're"          "you've"         
+ [5] "@greenpeace"     "we've"           "@watchingmytone" "we'll"          
+ [9] "that's"          "@glass_ambrose" 
+```
+
+> 词汇表外（OOV）的词项类型数量很多！当然，其中很多是用户标签（usertags）和话题标签（hashtags）——但这些仍可能包含有用的信息。使用当前方法构建推文层级嵌入时，若这些词出现在推文中，我们就被迫忽略它们。在这种情形下，我们受限于 GloVe 的词汇表，尽管它非常庞大（40 万词），但仍非穷尽性的。
+
+> 如果我们希望改进这一点，可以考虑以下两种方法：
+> (a) 使用当前语料库训练我们自己的词嵌入（尽管该语料库可能太小，无法为罕见词学习到有意义的表示）；
+> (b) 依赖于支持子词级分词（subword tokenisation）的词嵌入模型，例如 FastText
+
+</details> 
+    
+4. 接下来，我们将构建一个与 GloVe 嵌入表示对齐的推文“文档-特征矩阵”（DFM）
+你可以按照以下步骤操作：
+- 对推文进行分词，方式与问题 1 中提取不重复词项时完全一致
+- 使用 ``quanteda`` 包中的 ``dfm()`` 函数，基于分词结果创建文档-特征矩阵
+- 使用 ``dfm_match()`` 函数，将 DFM 的列（词项）与 ``vocab_intersection`` 对齐
+- 从 ``GloVe`` 矩阵中选取相关行，使其与推文 DFM 的列一一对应
+完成上述步骤后，你的推文 DFM 的列数应当等于 GloVe 矩阵的行数。你可以使用 ``dim()`` 函数来验证这一点
+    
+<details>
+<summary>Reveal Code</summary>
+
+```r
+# 从推特语料库中创建文档-特征矩阵（DFM）
+gp_dfm <- greenpeace_tweets$tweet_text %>%
+  tokens() %>%              # 分词
+  tokens_tolower() %>%      # 转为小写
+  dfm()                     # 构建 DFM
+
+# 将 DFM 与 vocab_intersection 对齐
+gp_dfm_matched <- dfm_match(gp_dfm, vocab_intersection)
+
+# 将 GloVe 嵌入矩阵与词汇交集对齐
+glove_matched <- glove[vocab_intersection,]
+rm(glove)  # 释放原始 GloVe 对象的内存
+
+# 比较 DFM 与嵌入矩阵的维度
+# DFM 的列数应该等于嵌入矩阵的行数！
+dim(gp_dfm_matched)
+```  
+    
+```
+[1] 38360 18538  
+```
+```r 
+dim(glove_matched)   
+```  
+  
+```
+[1] 18538   300
+```
+
+> 好消息：``gp_dfm`` 的列数（即词项类型的数量）等于 ``glove_matched`` 的行数。这意味着这两个矩阵是可相容的（conformable）—— 换句话说，它们可以进行矩阵乘法运算。这将在接下来的问题中派上用场
+
+</details> 
+    
+5. 现在，我们将通过聚合词嵌入来生成推文层级的嵌入表示，我们可以通过矩阵乘法来实现这一点。
+
+从直观上看，我们希望能够计入那些在一条推文中重复出现的词项。因此，与其简单地对某条推文中所有词项类型的嵌入向量求和或取平均，我们更希望对该推文中所有词元（word-tokens）的嵌入向量进行求和/平均。这等同于对词项嵌入执行加权求和或加权平均，其中权重由词项在推文中的出现频率决定。
+
+如果只有一篇文档和一个嵌入维度，我们可以通过简单地将该文档在 DFM 中的行与嵌入矩阵的对应列相乘来实现这一点，例如：``dfm_matched[1,] * glove_matched[,1]`` 但在包含多个文档和多个嵌入维度的情形下，使用矩阵乘法更为高效：``dfm_matched %*% glove_matched``
+    
+现在运行这段代码，并查看所得对象的维度:
+    
+<details>
+<summary>Reveal Code</summary>
+
+```r
+# 通过加法计算句子嵌入（sentence embeddings）
+# 可通过矩阵乘法实现
+aggregated_static_emb <- as.matrix(gp_dfm_matched %*% glove_matched)
+
+# 查看生成嵌入矩阵的维度
+dim(aggregated_static_emb)
+```  
+```
+[1] 38360   300
+```
+
+> 生成的对象包含38,360行（即推文的数量）和300列（即GloVe维度的数量）
+                        
+</details> 
+    
+6. 现在，通过将每一行除以其自身的模长（magnitude），对嵌入向量进行归一化处理（normalize）。⚠️请注意，向量的模长即是它到原点的欧几里得距离，计算方式为：每个维度上数值的平方和取平方根（即 ``sqrt(sum(v^2))``）若我们希望计算矩阵 ``m`` 中每一行的模长，可以使用 ``rowSums()`` 函数如下操作：``sqrt(rowSums(m^2))``
+    
+<details>
+<summary>Reveal Code</summary>
+
+```r
+# 对嵌入向量进行归一化处理
+aggregated_static_emb_normalised <- aggregated_static_emb/sqrt(rowSums(aggregated_static_emb^2))
+```
+                        
+</details> 
+    
+7. 最后，让我们找出与语料库中第一条推文在语义上最相似的其他推文。
+首先，从查看第一条推文内容开始：
+    
+```r
+greenpeace_tweets$tweet_text[1]
+```
+
+```
+[1] "Thinking of eating less meat in the new year? \n \nHere’s some inspiration from 4 world cultures and religions that embrace plant-based eating. 🥕🥦🌶️🌽🍆\n \nhttps://t.co/zj0ESkrNsc"
+```
+    
+现在，计算该推文与语料库中所有其他推文之间的余弦相似度（cosine similarity），方法与昨天讨论的查找最相似词时类似。你将再次使用 ``text2vec`` 包中的 ``sim2()`` 函数来完成这一计算
+最后，提取与目标推文最相似的前 5 条推文:
+    
+<details>
+<summary>Reveal Code</summary>
+
+```r
+# 计算第 1 条推文与所有其他推文之间的余弦相似度
+similarity_to_tweet1 <- sim2(
+  aggregated_static_emb_normalised[-1,],                         # 其余推文的嵌入（已归一化）
+  matrix(aggregated_static_emb_normalised[1,], nrow = 1)         # 第 1 条推文的嵌入（作为查询向量）
+)
+
+# 提取与目标推文最相似的 5 条推文
+greenpeace_tweets$tweet_text[-1][
+  order(similarity_to_tweet1, decreasing = TRUE)                 # 相似度降序排序
+][1:5]                                                           # 返回前 5 条
+```
+                        
+```
+[1] "@im_lowkey_loki There's plenty we can all do, from taking part in campaigns to eating less meat and more wonderful plant based food https://t.co/P5W0lX523V 🙂"     
+[2] "@judealdridge Many people around the world rely on meat and fish for protein.  Our campaign encourages everyone to eat less meat, making it more inclusive, and we're focusing on tackling industrial and unsustainable farming rather than consumers. Find out more at https://t.co/EAihtXB4Jw"
+[3] "@MarsDroid1 It's far less efficient to grow crops for farm animal feed than as food for people as this blog and video explains https://t.co/0V1HO3T0i0 so eating less meat and eating a wide range of plant-based food is great for forests and the climate."                                   
+[4] "@MissKay_Geog Our health, the stability of the climate and the future of the world’s forests depends on us eating less meat and dairy. By eating mostly plant based food, we could feed more people with all the calories and nutrition needed for a healthy diet without destroying forests 🌳"
+[5] "Happy #WorldVeganDay 🎉🥦🥑💚🍉🥝🎉\n\nMore and more people in the UK are eating less meat. \nWhether you're doing it to protect the environment, for the animals or for your own health - well done! 👏👏\n\nhttps://t.co/IHYkp3FYOs"                                                  
+```
+                        
+> 这些推文是否与目标推文相关？                        
+                        
+</details> 
+    
+
+    
+    
+## 6.5 第二部分：基于 Sentence-BERT 的嵌入表示
+
+为了生成 Sentence-BERT 嵌入表示，我们需要访问一个预训练的 Sentence-BERT 模型。最简便的方式是通过 HuggingFace API 获取。明天我们会更详细地讨论这个平台，简而言之，HuggingFace 是一个在线的预训练神经网络模型与数据集的仓库。你可以通过专门设计的 API 来访问这些模型。
+
+目前，在 R 中尚无良好的实现方式来支持这一过程，因此需要借助少量的 Python 代码。在明天的课程中，我们将讨论一个易于使用的 Python 接口 ——Colab。不过，为了本次研讨课的顺利进行，我们已为你提供了预先计算好的 Sentence-BERT 嵌入向量，你只需在 R 中对其进行分析，无需亲自运行任何 Python 代码。
+
+不过，为了加深理解，请参考下方的 Python 代码，了解这些嵌入表示是如何生成的：
+    
+- 第一步（在R中）是将推文导出为CSV文件：
+```r 
+write.csv(greenpeace_tweets, file = "greenpeace_tweets.csv", fileEncoding = 'UTF-8', row.names = FALSE)   
+```  
+
+- 接下来（在 Python 中），安装并导入以下依赖项（包）：
+```python 
+pip install pandas
+pip install sentence_transformers
+
+import pandas as pd
+from sentence_transformers import SentenceTransformer
+``` 
+    
+- 下一步，下载你所选择的 Sentence-BERT 模型。正如在讲座中提到的，可供选择的模型有很多，在模型体积、计算速度、在不同数据集上的表现等方面各不相同。在本次研讨课中，我们将使用 ``all-MiniLM-L6-v2`` 模型。这是一个运行速度相对较快的模型，同时在生成通用句子嵌入方面表现也相对优异：
+ 
+```python 
+model_preferred = SentenceTransformer('all-MiniLM-L6-v2')
+``` 
+
+- 现在我们可以将推文导入并使用以下代码将其编码为句子嵌入：
+
+```python 
+# 将推文导入为数据框
+greenpeace_tweets = pd.read_csv('greenpeace_tweets.csv')
+
+# 提取包含推文文本的列
+tweets = greenpeace_tweets['tweet_text']
+
+# 编码为句子嵌入（sentence embeddings）
+sentence_embeddings = model_preferred.encode(tweets, show_progress_bar = True)
+
+# 导出为 CSV 文件
+pd.DataFrame(sentence_embeddings).to_csv('greenpeace_sentence_embeddings.csv', index=False, header=False)
+```
+
+一切搞定！我已经提前完成了相关编码，因此你只需直接下载 ``greenpeace_sentence_embeddings.csv`` 文件,将预计算好的 Sentence-BERT 嵌入导入到 R 中
+
+1. 为了提高读取速度，建议使用 ``data.table`` 包中的 ``fread()`` 函数来导入该 CSV 文件:
+    
+```r
+sbert_emb <- fread(file = "greenpeace_sentence_embeddings.csv")
+sbert_emb <- as.matrix(sbert_emb)
+```
+    
+2. 检查嵌入向量是否已被归一化
+我们使用的这一特定 SBERT 模型在生成嵌入时会自动执行归一化处理。但我们仍可以进行验证：通过计算每个向量的模长（magnitude），其结果应当为 1。
+你可以复用6.4中问题6的代码来完成这一检查：
+    
+<details>
+<summary>Reveal Code</summary>
+
+```r
+# 随机抽取 100 行样本
+sbert_emb_sample <- sbert_emb[sample(1:nrow(sbert_emb), 100),]
+
+# 计算每一行向量的模长（magnitude）
+sqrt(rowSums(sbert_emb_sample^2))
+```
+                    
+```
+[1] 1.0000000 1.0000000 1.0000000 1.0000000 1.0000000 1.0000000 1.0000000
+  [8] 1.0000001 1.0000000 1.0000001 1.0000000 1.0000000 1.0000000 1.0000000
+ [15] 1.0000000 1.0000001 1.0000000 1.0000000 0.9999999 1.0000000 1.0000000
+ [22] 1.0000001 1.0000000 0.9999999 1.0000000 1.0000000 1.0000000 1.0000000
+ [29] 1.0000000 1.0000000 1.0000000 1.0000000 1.0000000 1.0000001 1.0000000
+ [36] 1.0000000 1.0000000 1.0000001 1.0000000 1.0000000 1.0000000 1.0000001
+ [43] 1.0000000 0.9999999 1.0000000 1.0000001 1.0000000 1.0000000 1.0000000
+ [50] 1.0000001 1.0000000 1.0000000 0.9999999 1.0000000 1.0000001 1.0000000
+ [57] 1.0000000 1.0000000 1.0000000 1.0000000 0.9999999 1.0000000 1.0000000
+ [64] 1.0000000 1.0000000 1.0000000 1.0000000 1.0000000 1.0000000 0.9999999
+ [71] 1.0000000 1.0000000 1.0000000 0.9999999 1.0000000 1.0000000 1.0000000
+ [78] 1.0000000 1.0000000 1.0000000 1.0000000 1.0000000 1.0000000 1.0000000
+ [85] 1.0000000 1.0000000 1.0000000 1.0000000 1.0000000 1.0000000 1.0000000
+ [92] 1.0000000 1.0000000 1.0000000 1.0000001 1.0000000 1.0000000 1.0000000
+ [99] 1.0000000 1.0000000
+```
+> 所有数值都等于或非常接近 1，这表明嵌入向量确实已经被归一化 (这些微小的偏离是由于数值计算中的细小误差所致)
+                        
+</details> 
+
+3. 使用 SBERT 嵌入向量找出与语料库中第一条推文语义最相似的其他推文。
+请重复6.4中问题7的步骤，但这次使用的是 ``sbert_emb`` 而非聚合后的词嵌入向量
+🤔思考：这些结果与使用聚合词嵌入时相比如何？这些推文是否在语义上与第一条推文更加接近？
+
+
+<details>
+<summary>Reveal Code</summary>
+    
+```r
+# 检查第一条推文
+greenpeace_tweets$tweet_text[1]
+```
+
+```
+[1] "Thinking of eating less meat in the new year? \n \nHere’s some inspiration from 4 world cultures and religions that embrace plant-based eating. 🥕🥦🌶️🌽🍆\n \nhttps://t.co/zj0ESkrNsc"
+```
+    
+```r
+# 检查第一条推文
+# 计算第 1 条推文与其他所有推文之间的余弦相似度（使用 SBERT 嵌入）
+similarity_to_tweet1_sbert <- sim2(
+  sbert_emb[-1,],                                      # 除第 1 条以外的推文嵌入
+  matrix(sbert_emb[1,], nrow = 1)                      # 第 1 条推文的嵌入向量
+)
+
+# 提取与目标推文最相似的 5 条推文
+greenpeace_tweets$tweet_text[-1][
+  order(similarity_to_tweet1_sbert, decreasing = TRUE)   # 按相似度降序排列
+][1:5]                                                   # 返回前 5 条
+```
+ 
+```
+[1] "@VeganChatRoom Greenpeace always encourage people to eat less meat, but we think January is a great time to make a change, especially if the change is good for the planet! 👍"
+[2] "@BradleyAllsop2 we promote eating less meat, sustainable agriculture http://t.co/KZAapXvCQi and wld vegetarian day http://t.co/0ug992U4jL"                                     
+[3] "@im_lowkey_loki There's plenty we can all do, from taking part in campaigns to eating less meat and more wonderful plant based food https://t.co/P5W0lX523V 🙂"                
+[4] "RT @Greenpeace: Happy #WorldVeganDay! Eating a plant-based diet is good for people, animals &amp; the planet. Here are tips for newbies\nhttps:/…"                             
+[5] "@claireperrymp 10: Radically change the farming and food system to encourage a less meat-based diet #ClimateEmergency \n\nhttps://t.co/ewrq3gHj3q"
+```
+
+> 这些推文相较于使用聚合词嵌入检索的结果，与第一条推文的语义更为接近。两种方法返回的推文都涉及减少肉类摄入这一主题，但使用 SBERT 嵌入时，第一条最相似的推文具体提到了“新年期间少吃肉”，在语境层面上与目标推文的契合度更高 
+                              
+                        
+</details> 
+
+    
+## 6.6 第三部分：K-means 聚类分析
+
+为了识别 Greenpeace 在该时间段内提出的主要主张，我们现在可以利用句子嵌入表示对推文进行聚类。在讲座中，我们介绍了 k-means 聚类算法。在本节中，我们将使用 R 来实现该算法，并从每个聚类中提取最具“中心性”的推文，作为代表性示例，以便后续人为标注和主题归纳。
+    
+1. 对完整的推文样本应用 k-means 聚类算法。
+请使用 R 语言中基础包（base R）提供的 ``kmeans()`` 函数来实现。为此，你需要选定一个 k 值（即聚类的数量）:
+    
+<details>
+<summary>Reveal Code</summary>
+
+```r
+# K-means 聚类
+set.seed(20)
+k = 50
+kmeans_out <- kmeans(sbert_emb, centers = k, iter.max = 20, nstart = 1)
+```
+                        
+</details> 
+    
+    
+2. 提取每个聚类中最具中心性的推文
+k-means 的一个实用特性是：最靠近聚类质心（centroid）的观测值可被视为该聚类中最具“代表性”的样本。因此，我们可以通过观察这些中心推文来对各个聚类进行人为标签标注。请创建一个长度为 k 的列表，其中每个元素包含该聚类中最靠近质心的 10 条推文：
+    
+<details>
+<summary>Reveal Code</summary>
+
+```r
+# 找出每个聚类中最具中心性的推文
+most_central <- list()
+
+for (j in 1:k) {
+  
+  # 提取第 j 个聚类中的嵌入向量
+  cl_emb <- sbert_emb[kmeans_out$cluster == j, ]
+  
+  # 提取第 j 个聚类中的推文文本
+  cl_text <- greenpeace_tweets$tweet_text[kmeans_out$cluster == j]
+  
+  # 计算第 j 个聚类中每条推文与该聚类质心之间的余弦相似度
+  cl_cos <- sim2(cl_emb, matrix(kmeans_out$centers[j, ], nrow = 1))
+  
+  # 提取第 j 个聚类中最接近质心的 10 条推文（即最具代表性）
+  most_central[[j]] <- cl_text[order(cl_cos, decreasing = TRUE)[1:10]]
+  
+}
+```
+                        
+</details> 
+    
+3. 查看聚类结果，尝试为每个聚类归纳出合理的标签
+例如：查看第 6 个聚类中最具代表性的推文，进而判断该聚类的核心主题
+    
+<details>
+<summary>Reveal Code</summary>    
+    
+```r
+most_central[[6]]
+```
+```
+[1] "Fed up of plastic waste? \n\nTake action against plastic pollution, tell your supermarket to ditch plastic packaging! \n\nAdd your name &gt;&gt; https://t.co/0MXev4T1d3"
+[2] "Great to see @CatherineWest1 @SueHayman1 &amp; 200 other MPs calling on supermarkets to eliminate plastic packaging by 2023. Let's hope they rise to the challenge! #EndOceanPlastics https://t.co/wNOauUk2Hv"                 
+[3] "RT @thisisfreegle: trying to go #PlasticFree\nHow are the Supermarkets doing at tackling the plastic problem?\nCheck out the @greenpeaceuk 20…"                         
+[4] "Thanks to our amazing volunteers around the UK helping #shoppersrevolt against excessive plastic. \n\nIf you shop at @Tesco, @Morrisons , @AldiUK, @LidlUK, @asda, @coopuk, @waitrose @sainsburys  or @marksandspencer - tell them to ditch excessive plastic &gt;&gt; https://t.co/o17QYYuJ8Q https://t.co/7Bko4zJxnm"
+[5] "The usual suspects have made \"zero progress\" on reducing plastic waste! 😡 \n\nThese companies need to show much more ambition to reduce plastic packaging.\n\nhttps://t.co/S5nnEudqSE"                     
+[6] "ICYMI: Our amazing volunteers were around the UK helping #shoppersrevolt against excessive plastic. \n\nIf you shop at @Tesco, @Morrisons , @AldiUK, @LidlUK, @asda, @coopuk, @waitrose @sainsburys  or @marksandspencer - tell them to ditch excessive plastic &gt; https://t.co/o17QYYuJ8Q https://t.co/DpL7xHra3G"  
+[7] "Let's hope next year's word is \"reuse\"! 🤞🐳\n\nSign the petition &amp; tell supermarkets to ditch single-use plastic packaging\n🍎🌽🥦🍌 &gt;&gt; https://t.co/Bacd0VSoPh #EndOceanPlastics https://t.co/vPd9xZyqx6"                                   
+[8] "RT if you agree! Tell supermarkets to ditch pointless plastic packaging &gt;&gt; https://t.co/Vt4aSaKYNh #EndOceanPlastics https://t.co/V1roWJpieY"                 [9] "@SaintSouthside We're targeting companies and Governments too, of course, but we all need to take responsibility for reducing the vast and unsustainable amounts of plastic waste currently produced, including consumers.  Refillable cups &amp; bottles are easily found in supermarkets and pound shops"            
+[10] "After thousands of people took action in-store and online, @sainsburys have promised to reduce their plastic footprint by 50% by 2025.\n\nThis could be a big move in the fight against plastic pollution!\n\n#PeoplePower\n\nMore info&gt; \nhttps://t.co/l4tDcvSBnB"  
+```
+ 
+</details> 
