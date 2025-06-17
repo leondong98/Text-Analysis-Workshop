@@ -3,10 +3,9 @@ title: 简单R入门
 
 ---
 
-# 简单 R 入门
-
 讲座人：Hanxu hanxu.dong.21@ucl.ac.uk
 
+⚠️ 在此Seminar结束后，我们将讨论 [简单 Python 入门](https://colab.research.google.com/drive/1HnM7ueu8lW9njazJns__v9NsDp0Y-rJ1)
 
 如果你还没有接触过 R， 或者对上次使用 R 的操作已经有些生疏（这完全可以理解：编程就像外语学习，如果不用就会遗忘），你可以先完成这里提供的一些练习。这些练习旨在帮助你初识/回顾 R 编程的基本概念，以及如何高效使用 RStudio。
 
