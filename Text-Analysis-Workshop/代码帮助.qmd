@@ -3,8 +3,6 @@ title: 代码帮助
 
 ---
 
-# Coding Help
-
 讲座人：Hanxu hanxu.dong.21@ucl.ac.uk
 
 ## 保存图表
