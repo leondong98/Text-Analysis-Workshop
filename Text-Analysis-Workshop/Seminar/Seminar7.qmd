@@ -1,5 +1,5 @@
 ---
-title: Seminar7: 语言模型C：神经网络、迁移学习与Transformer架构
+title: "Seminar7: 语言模型C：神经网络、迁移学习与Transformer架构"
 
 ---
 
