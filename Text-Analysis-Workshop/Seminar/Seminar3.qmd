@@ -1,9 +1,7 @@
 ---
-title: '研讨会3: 语言模型A：监督式文本分类学习'
+title: Seminar3: 语言模型A：监督式文本分类学习'
 
 ---
-
-# 研讨会3: 语言模型A：监督式文本分类学习
 
 讲座人：Hanxu hanxu.dong.21@ucl.ac.uk
 
