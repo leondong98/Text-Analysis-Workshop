@@ -1,5 +1,5 @@
 ---
-title: Seminar2: 相似性、差异性与复杂性
+title: "Seminar2: 相似性、差异性与复杂性"
 
 ---
 
