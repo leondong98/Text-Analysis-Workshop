@@ -1,5 +1,5 @@
 ---
-title: Seminar6: 文本作为数据C：词序列 
+title: "Seminar6: 文本作为数据C：词序列"
 
 ---
 
