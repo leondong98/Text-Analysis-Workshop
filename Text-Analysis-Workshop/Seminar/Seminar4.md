@@ -1,10 +1,7 @@
 ---
-title: '研讨会4: 语言模型B：主题模型'
+title: "Seminar4: 语言模型B：主题模型"
 
 ---
-
-# 研讨会4: 语言模型B：主题模型
-
 讲座人：Hanxu hanxu.dong.21@ucl.ac.uk
 
 <p>
